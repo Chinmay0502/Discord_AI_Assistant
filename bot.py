@@ -10,7 +10,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
-model = ChatGoogleGenerativeAI(model='gemini-1.5-flash')
+model = ChatGoogleGenerativeAI(model='gemini-3.5-flash')
 agent = create_agent(model=model, tools=[])
 
 @client.event

@@ -62,7 +62,7 @@ def surfInternet(query: str):
 
 # OpenRouter Free Tier Model Setup
 model = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
+    model="gemini-3.5-flash",
     google_api_key=os.getenv("GEMINI_API_KEY"),
 
 )
