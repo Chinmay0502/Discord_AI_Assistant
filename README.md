@@ -2,196 +2,254 @@
 
 **DiscordAI** is a smart, full-stack Discord bot powered by LangChain and Google's Gemini LLM, designed to bring intelligent conversational capabilities, custom context handling, and real-time AI assistance directly into your Discord servers.
 
-The project integrates a **Discord Bot Client (`discord.py`)**, a **LangChain agent pipeline**, **Google Gemini (`gemini-1.5-flash`)**, and a lightweight **Flask background web server** to ensure 24/7 cloud uptime and reliable chat responses.
+The project integrates a **Discord Bot Client (`discord.py`)**, a **LangChain agent pipeline**, **Google Gemini (`gemini-1.5-flash`)**, and a lightweight **Flask background web server** for cloud deployment and health monitoring.
 
 ---
 
-## 🌟 Overview
+# 🌟 Overview
 
 Modern communities require automated, context-aware assistance to handle engagement, answer technical questions, and interact smoothly with members.
 
-**DiscordAI** solves this by listening to server messages, piping them through a custom-configured LangChain agent running on Google Gemini, and streaming clean text replies back to your Discord channels.
+**DiscordAI** listens to server messages, processes them through a LangChain agent running on Google Gemini, and sends clean AI-generated responses back to Discord channels.
 
-The application is built using a modern Python and cloud deployment architecture:
+The application is built using:
 
 * 🤖 **Bot Framework:** Python `discord.py`
 * 🧠 **LLM Engine:** Google Gemini via `langchain-google-genai`
 * 🛠️ **Orchestration:** LangChain Agents & Message Core
-* 🌐 **Keep-Alive Server:** Flask (Python micro web framework)
-* ⚙️ **Runtime Environment:** Python 3.x
-* ☁️ **Cloud Hosting:** Render (Web Service + UptimeRobot integration)
+* 🌐 **Web Server:** Flask
+* ⚙️ **Runtime:** Python 3.x
+* ☁️ **Cloud Hosting:** Render
 
 ---
 
-## ✨ Key Features
+# ✨ Key Features
 
 * 💬 Real-time Discord server message handling
 * 🧠 Powered by Google Gemini (`gemini-1.5-flash`)
 * 🔗 LangChain agent framework integration
-* 🧹 Clean plain-text response extraction (filters raw LLM payload structures)
-* ⚡ Robust intent configuration (`message_content` intent enabled)
-* 🌐 Built-in Flask web server for zero-downtime cloud hosting
-* 🛡️ Secure configuration via environment variables (`python-dotenv`)
-* 🚀 Easy local development and cloud deployment configuration
-* 🔄 Automated 24/7 uptime support using external ping services
+* 🧹 Plain-text response extraction from LLM responses
+* ⚡ Discord `message_content` intent support
+* 🌐 Built-in Flask web server
+* 🛡️ Environment-variable based secret management
+* 🚀 Local and cloud deployment support
+* 🔄 HTTP health monitoring support
 
 ---
 
 # 🏗️ System Architecture
 
-The project manages concurrent processes for real-time Discord WebSocket communication and background health checks.
-
 ```text
-                    ┌──────────────────────┐
-                    │    Discord Server    │
-                    └──────────┬───────────┘
-                               │
-                               ▼ WebSocket (discord.py)
-                    ┌──────────────────────┐
-                    │ Python Bot Script    │
-                    │ (Discord Client)     │
-                    └───────┬───────┬──────┘
-                            │       │
-              AI Prompt     │       │ Background Thread
-                            │       │
-                            ▼       ▼
-                ┌───────────────┐   ┌──────────────────┐
-                │ LangChain &   │   │ Flask Web Server │
-                │ Google Gemini │   │ (Port 10000)     │
-                └───────────────┘   └────────┬─────────┘
-                                             │ HTTP Ping Request
-                                             ▼
-                            ┌─────────────────────────────────┐
-                            │ UptimeRobot (Keep-Alive Service)│
-                            └─────────────────────────────────┘
+                     ┌──────────────────────┐
+                     │    Discord Server    │
+                     └──────────┬───────────┘
+                                │
+                                │ WebSocket
+                                │ discord.py
+                                ▼
+                     ┌──────────────────────┐
+                     │   Python Bot Script  │
+                     │    Discord Client    │
+                     └───────┬───────┬──────┘
+                             │       │
+                    AI Prompt│       │Background Thread
+                             │       │
+                             ▼       ▼
+                  ┌────────────────┐  ┌──────────────────┐
+                  │ LangChain +    │  │ Flask Web Server │
+                  │ Google Gemini  │  │                  │
+                  └────────────────┘  └────────┬─────────┘
+                                               │
+                                               │ HTTP
+                                               ▼
+                                      ┌──────────────────┐
+                                      │ Uptime Monitoring │
+                                      └──────────────────┘
+```
 
-🔄 How It Works
+---
+
+# 🔄 How It Works
 
 The DiscordAI message-processing workflow operates through these core steps:
 
-Step 1 — Message Event Trigger
+### Step 1 — Message Event Trigger
 
 A user sends a message in a text channel where the bot has permission to read and send messages.
 
-Step 2 — Filtering & Validation
+### Step 2 — Filtering & Validation
 
-The on_message event listener checks whether the message was sent by the bot itself. This prevents the bot from responding to its own messages and creating an infinite loop.
+The `on_message` event listener checks whether the message was sent by the bot itself. This prevents the bot from responding to its own messages and creating an infinite loop.
 
-Step 3 — Agent Invocation
+### Step 3 — Agent Invocation
 
-The user's message content is wrapped inside a HumanMessage object and passed to the LangChain agent.
+The user's message content is wrapped inside a `HumanMessage` object and passed to the LangChain agent.
 
-Step 4 — LLM Processing
+### Step 4 — LLM Processing
 
-The LangChain agent sends the request to the Google Gemini model (gemini-1.5-flash) and generates an AI response.
+The LangChain agent sends the request to the Google Gemini model (`gemini-1.5-flash`) and generates an AI response.
 
-Step 5 — Text Extraction
+### Step 5 — Text Extraction
 
 The application processes the agent response and extracts the plain text from the returned response payload.
 
-Step 6 — Response Delivery
+### Step 6 — Response Delivery
 
 The extracted text is sent back to the Discord channel using:
 
+```python
 await message.channel.send(text_to_send)
-🛠️ Technology Stack
-Core Language & API
-Python — Core programming language.
-discord.py — Python API wrapper for interacting with Discord.
-Flask — Lightweight web framework used to expose a web endpoint.
-Artificial Intelligence
-Google Gemini — Large language model used to generate responses.
-LangChain — Framework used for AI agent orchestration.
-LangChain Google GenAI — Integration between LangChain and Google Gemini.
-Deployment & Infrastructure
-GitHub — Source-code hosting and version control.
-Render — Cloud hosting platform for deploying the application.
-UptimeRobot — HTTP monitoring service.
-📁 Project Structure
+```
+
+---
+
+# 🛠️ Technology Stack
+
+## Core Language & API
+
+* **Python** — Core programming language.
+* **discord.py** — Python API wrapper for interacting with Discord.
+* **Flask** — Lightweight web framework used to expose a web endpoint.
+
+## Artificial Intelligence
+
+* **Google Gemini** — Large language model used to generate responses.
+* **LangChain** — Framework used for AI agent orchestration.
+* **LangChain Google GenAI** — Integration between LangChain and Google Gemini.
+
+## Deployment & Infrastructure
+
+* **GitHub** — Source-code hosting and version control.
+* **Render** — Cloud hosting platform.
+* **UptimeRobot** — Optional HTTP monitoring service.
+
+---
+
+# 📁 Project Structure
+
+```text
 DiscordAI/
 │
 ├── bot.py                  # Main Discord bot + Flask server
 ├── requirements.txt        # Python dependencies
-├── .gitignore              # Files ignored by Git
-├── .env                    # Local environment variables (NOT uploaded)
+├── .gitignore              # Git ignored files
 ├── .env.example            # Example environment variables
-└── README.md               # Project documentation
+├── README.md               # Project documentation
+│
+├── .env                    # Local secrets - NOT uploaded
+└── venv/                   # Local virtual environment - NOT uploaded
+```
 
-Note: venv/ is also created locally but is excluded from Git using .gitignore.
+> `.env` and `venv/` are intentionally excluded from Git using `.gitignore`.
 
-🚀 Getting Started
+---
+
+# 🚀 Getting Started
 
 Follow these instructions to run DiscordAI locally or deploy it to the cloud.
 
-Prerequisites
+## Prerequisites
 
-Make sure you have the following installed:
+Make sure you have:
 
-Python 3.x
-pip
-Git
-A Discord Developer account
-A Discord Bot
-A Discord Bot Token
-A Google Generative AI API Key
-📥 Clone the Repository
+* Python 3.x
+* pip
+* Git
+* A Discord Developer account
+* A Discord Bot
+* A Discord Bot Token
+* A Google Generative AI API Key
 
-Clone the repository using:
+---
 
+# 📥 Clone the Repository
+
+```bash
 git clone https://github.com/YOUR_USERNAME/DiscordAI.git
 cd DiscordAI
+```
 
-Replace YOUR_USERNAME with your GitHub username.
+Replace `YOUR_USERNAME` with your GitHub username.
 
-🐍 Create a Virtual Environment
+---
+
+# 🐍 Create a Virtual Environment
 
 Create a Python virtual environment:
 
+```bash
 python -m venv venv
+```
 
-The venv/ directory is intentionally not uploaded to GitHub.
+The `venv/` directory is local and should **not** be uploaded to GitHub.
 
-Activate the environment:
+### Windows
 
-Windows
+```cmd
 venv\Scripts\activate
-macOS / Linux
+```
+
+### macOS / Linux
+
+```bash
 source venv/bin/activate
-📦 Install Dependencies
+```
 
-Install the required Python packages:
+---
 
+# 📦 Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-Your requirements.txt should contain the required dependencies, including:
+Your `requirements.txt` should include:
 
+```text
 discord.py
 python-dotenv
 langchain
 langchain-google-genai
 flask
-⚙️ Configuration
+```
 
-Create a .env file in the root of the project:
+---
 
+# ⚙️ Configuration
+
+Create a `.env` file in the root directory:
+
+```env
 DISCORD_API_KEY=your_discord_bot_token_here
 GOOGLE_API_KEY=your_google_gemini_api_key_here
 PORT=10000
-Environment Variables
-Variable	Description	Required
-DISCORD_API_KEY	Discord Bot Token	Yes
-GOOGLE_API_KEY	Google Gemini API Key	Yes
-PORT	Port used by Flask	No
+```
 
-If PORT is not provided, the application defaults to:
+---
 
+# 🔑 Environment Variables
+
+| Variable          | Description           | Required |
+| ----------------- | --------------------- | -------- |
+| `DISCORD_API_KEY` | Discord Bot Token     | Yes      |
+| `GOOGLE_API_KEY`  | Google Gemini API Key | Yes      |
+| `PORT`            | Flask server port     | No       |
+
+If `PORT` is not specified, the application uses:
+
+```text
 10000
-🔐 Environment Security
+```
 
-Never upload your .env file to GitHub.
+---
 
-Your .gitignore should contain:
+# 🔐 Environment Security
 
+**Never upload your `.env` file to GitHub.**
+
+Create a `.gitignore` file in the root of your project with:
+
+```gitignore
 # Environment variables
 .env
 .env.*
@@ -213,129 +271,179 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+```
 
-This ensures that sensitive credentials and your local virtual environment are not committed to Git.
+This prevents:
 
-📄 .env.example
+* `.env` from being uploaded
+* `venv/` from being uploaded
+* Python cache files from being uploaded
+* IDE configuration files from being uploaded
 
-You can create a safe example file that can be committed to GitHub:
+---
 
+# 📄 .env.example
+
+Create a `.env.example` file that can safely be committed to GitHub:
+
+```env
 DISCORD_API_KEY=your_discord_bot_token_here
 GOOGLE_API_KEY=your_google_gemini_api_key_here
 PORT=10000
+```
 
-The .env.example file contains placeholders only and should never contain your real API keys or Discord token.
+The `.env.example` file should contain **placeholders only**.
 
-💻 Running Locally
+Never put your real Discord token or Google API key inside it.
 
-After activating your virtual environment and configuring .env, start the bot:
+---
 
+# 💻 Running Locally
+
+After activating your virtual environment and creating `.env`, run:
+
+```bash
 python bot.py
+```
 
 The application will:
 
-Start the Flask web server.
-Start the Discord client.
-Connect to Discord using the bot token.
-Listen for incoming messages.
-Send messages to the Gemini-powered LangChain agent.
-Return the generated response to the Discord channel.
-🤖 Discord Bot Configuration
+1. Start the Flask web server.
+2. Start the Discord client.
+3. Connect to Discord using the bot token.
+4. Listen for incoming messages.
+5. Send messages to the Gemini-powered LangChain agent.
+6. Return the generated response to the Discord channel.
+
+---
+
+# 🤖 Discord Bot Configuration
 
 After creating your Discord application and bot through the Discord Developer Portal, make sure the required intents are enabled.
 
-The bot requires the Message Content Intent because it needs access to the text content of Discord messages.
+The bot requires the **Message Content Intent** because it needs access to the text content of Discord messages.
 
 The code enables it with:
 
+```python
 intents = discord.Intents.default()
 intents.message_content = True
+```
 
-You should also make sure the bot has the required permissions in your Discord server, such as:
+Make sure the bot has appropriate permissions, including:
 
-View Channels
-Send Messages
-Read Message History
-☁️ Cloud Deployment with Render
+* View Channels
+* Send Messages
+* Read Message History
+
+---
+
+# ☁️ Cloud Deployment with Render
 
 DiscordAI can be deployed as a web service on Render.
 
-1. Push the Project to GitHub
+## 1. Push the Project to GitHub
 
-Make sure your repository contains:
+Your GitHub repository should contain:
 
+```text
 bot.py
 requirements.txt
 .gitignore
 .env.example
 README.md
+```
 
-Do not upload:
+Do **not** upload:
 
+```text
 .env
 venv/
-2. Create a Render Web Service
+```
 
-Go to the Render dashboard and create a new Web Service.
+---
 
-Connect your GitHub repository.
+## 2. Create a Render Web Service
 
-Configure the service with:
+Create a new Web Service in Render and connect your GitHub repository.
 
-Setting	Value
-Runtime	Python 3
-Build Command	pip install -r requirements.txt
-Start Command	python bot.py
-3. Add Environment Variables
+Configure:
 
-In Render, open the Environment Variables section and add:
+| Setting       | Value                             |
+| ------------- | --------------------------------- |
+| Runtime       | Python 3                          |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `python bot.py`                   |
 
+---
+
+## 3. Add Environment Variables
+
+In the Render environment-variable settings, add:
+
+```text
 DISCORD_API_KEY
 GOOGLE_API_KEY
 PORT
+```
 
-For example:
+Example:
 
+```text
 DISCORD_API_KEY = your_discord_bot_token
 GOOGLE_API_KEY = your_google_api_key
 PORT = 10000
+```
 
-Do not put your actual keys inside bot.py or README.md.
+Keep your real credentials inside Render's environment settings rather than putting them in your repository.
 
-🌐 Flask Keep-Alive Server
+---
 
-The project includes a small Flask server:
+# 🌐 Flask Web Server
 
-@app.route('/')
+The application includes a small Flask server:
+
+```python
+@app.route("/")
 def home():
     return "DiscordAI Bot is active!"
+```
 
-The server listens on the port provided by the PORT environment variable:
+The Flask server reads the port from the environment:
 
+```python
 port = int(os.getenv("PORT", 10000))
+```
 
-This allows the application to expose an HTTP endpoint when deployed as a web service.
+This provides an HTTP endpoint that can be used for application health monitoring.
 
-⏱️ Uptime Monitoring
+---
 
-You can use an external HTTP monitoring service such as UptimeRobot to monitor the deployed application.
+# ⏱️ Uptime Monitoring
 
-After deploying the application, use your Render service URL as the monitoring target.
+You can use an external HTTP monitoring service such as **UptimeRobot** to monitor your deployed application.
 
-For example:
+After deployment, use your Render service URL as the monitoring target:
 
+```text
 https://your-bot-name.onrender.com
+```
 
-The Flask / endpoint returns:
+The root endpoint returns:
 
+```text
 DiscordAI Bot is active!
+```
 
-Availability and sleep behavior depend on the hosting provider's current free-tier policies. Check the provider's documentation for the latest limitations.
+> Hosting providers can change their free-tier policies and sleep behavior. Check the current Render documentation for the latest limitations.
 
-📝 Code Implementation
+---
 
-The main application is contained in bot.py.
+# 📝 Code Implementation
 
+The main application is contained in `bot.py`.
+
+```python
 import discord
 import os
 from threading import Thread
@@ -375,6 +483,7 @@ def home():
 
 def run_web():
     port = int(os.getenv("PORT", 10000))
+
     app.run(
         host="0.0.0.0",
         port=port
@@ -441,109 +550,168 @@ if __name__ == "__main__":
     client.run(
         os.getenv("DISCORD_API_KEY")
     )
-📦 Requirements
+```
 
-A basic requirements.txt can contain:
+---
 
+# 📦 Requirements
+
+Create a `requirements.txt` file containing:
+
+```text
 discord.py
 python-dotenv
 langchain
 langchain-google-genai
 flask
+```
 
-Install them with:
+Install the dependencies:
 
+```bash
 pip install -r requirements.txt
-🔑 Environment Variables Summary
-Variable	Purpose	Required
-DISCORD_API_KEY	Authenticates the Discord bot	Yes
-GOOGLE_API_KEY	Authenticates Google Gemini	Yes
-PORT	Flask server port	No
-🛡️ Security Best Practices
-Never commit secrets
+```
+
+---
+
+# 🔑 Environment Variables Summary
+
+| Variable          | Purpose                       | Required |
+| ----------------- | ----------------------------- | -------- |
+| `DISCORD_API_KEY` | Authenticates the Discord bot | Yes      |
+| `GOOGLE_API_KEY`  | Authenticates Google Gemini   | Yes      |
+| `PORT`            | Flask server port             | No       |
+
+---
+
+# 🛡️ Security Best Practices
+
+## Never Commit Secrets
 
 Do not commit:
 
+```text
 .env
+```
 
 Do not place API keys directly inside:
 
+```text
 bot.py
 README.md
 requirements.txt
-Use environment variables
+```
 
-Load credentials using:
+Use environment variables instead.
 
+Load environment variables with:
+
+```python
 load_dotenv()
+```
 
-Then access them using:
+Access them using:
 
+```python
 os.getenv("DISCORD_API_KEY")
+```
 
 and:
 
+```python
 os.getenv("GOOGLE_API_KEY")
-Protect your Discord token
+```
+
+## Protect Your Discord Token
 
 Your Discord bot token should be treated like a password.
 
-If a token is accidentally exposed publicly, regenerate it through the Discord Developer Portal.
+If your token is accidentally exposed publicly, regenerate it through the Discord Developer Portal.
 
-🔄 Git Workflow
+---
 
-After making changes to your project:
+# 🔄 Git Workflow
 
+Check your changes:
+
+```bash
 git status
+```
 
-Add your changes:
+Add your files:
 
+```bash
 git add .
+```
 
-Commit them:
+Commit:
 
+```bash
 git commit -m "Update DiscordAI"
+```
 
-Push them to GitHub:
+Push to GitHub:
 
+```bash
 git push
+```
 
-Because .env and venv/ are included in .gitignore, they will not be included in the commit.
+Because `.env` and `venv/` are included in `.gitignore`, they will not be included in the commit.
 
-🤝 Contributing
+You can verify this before committing with:
+
+```bash
+git status
+```
+
+---
+
+# 🤝 Contributing
 
 Contributions, feature requests, and bug reports are welcome.
 
 To contribute:
 
-Fork the repository.
-Create a new branch.
-Make your changes.
-Commit your changes.
-Push the branch.
-Open a Pull Request.
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes.
+4. Commit your changes.
+5. Push your branch.
+6. Open a Pull Request.
 
 Example:
 
+```bash
 git checkout -b feature/new-feature
 git add .
 git commit -m "Add new feature"
 git push origin feature/new-feature
-📜 License
+```
+
+---
+
+# 📜 License
 
 Distributed under the terms of the project's repository license.
 
-⭐ Support
+---
 
-If you found DiscordAI useful, consider giving the repository a ⭐ on GitHub.
+# ⭐ Support
 
-📌 Important Files
-File	Upload to GitHub?
-bot.py	✅ Yes
-requirements.txt	✅ Yes
-README.md	✅ Yes
-.gitignore	✅ Yes
-.env.example	✅ Yes
-.env	❌ No
-venv/	❌ No
-__pycache__/	❌ No
+If you found **DiscordAI** useful, consider giving the repository a ⭐ on GitHub.
+
+---
+
+# 📌 Important Files
+
+| File / Directory   | Upload to GitHub? |
+| ------------------ | ----------------- |
+| `bot.py`           | ✅ Yes             |
+| `requirements.txt` | ✅ Yes             |
+| `README.md`        | ✅ Yes             |
+| `.gitignore`       | ✅ Yes             |
+| `.env.example`     | ✅ Yes             |
+| `.env`             | ❌ No              |
+| `venv/`            | ❌ No              |
+| `.venv/`           | ❌ No              |
+| `__pycache__/`     | ❌ No              |
